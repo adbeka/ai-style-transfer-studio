@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import VGG19_Weights
+import os
+import urllib.request
 
 class AdaIN(nn.Module):
     def __init__(self):
@@ -66,8 +68,17 @@ class Decoder(nn.Module):
             nn.ReflectionPad2d((1, 1, 1, 1)),
             nn.Conv2d(64, 3, (3, 3)),
         )
+        self.load_weights()
 
-    def forward(self, x):
+    def load_weights(self):
+        model_dir = '/models'
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+        weight_path = os.path.join(model_dir, 'decoder.pth')
+        if not os.path.exists(weight_path):
+            url = 'https://github.com/naoto0804/pytorch-AdaIN/raw/master/models/decoder.pth'
+            urllib.request.urlretrieve(url, weight_path)
+        self.load_state_dict(torch.load(weight_path, map_location='cpu'))
         return self.layers(x)
 
 class StyleTransferModel(nn.Module):
