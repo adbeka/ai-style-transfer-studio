@@ -81,16 +81,46 @@ class Decoder(nn.Module):
         self.load_state_dict(torch.load(weight_path, map_location='cpu'))
         return self.layers(x)
 
-class StyleTransferModel(nn.Module):
+
+# Example: Add a second style transfer model (CartoonStyleTransferModel)
+class CartoonStyleTransferModel(nn.Module):
     def __init__(self):
-        super(StyleTransferModel, self).__init__()
+        super(CartoonStyleTransferModel, self).__init__()
+        # For demo, reuse Encoder/Decoder, but in practice, use a different architecture/weights
         self.encoder = Encoder()
         self.adain = AdaIN()
         self.decoder = Decoder()
 
     def forward(self, content, style):
+        # For demo, same as StyleTransferModel
         content_feat = self.encoder(content)
         style_feat = self.encoder(style)
         adain_feat = self.adain(content_feat, style_feat)
         output = self.decoder(adain_feat)
         return output
+
+class StyleTransferModel(nn.Module):
+    def __init__(self, model_type: str = 'adain'):
+        super(StyleTransferModel, self).__init__()
+        if model_type == 'cartoon':
+            self.model = CartoonStyleTransferModel()
+        else:
+            self.model = self._adain_model()
+
+    def _adain_model(self):
+        class AdaINModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.encoder = Encoder()
+                self.adain = AdaIN()
+                self.decoder = Decoder()
+            def forward(self, content, style):
+                content_feat = self.encoder(content)
+                style_feat = self.encoder(style)
+                adain_feat = self.adain(content_feat, style_feat)
+                output = self.decoder(adain_feat)
+                return output
+        return AdaINModel()
+
+    def forward(self, content, style):
+        return self.model(content, style)
