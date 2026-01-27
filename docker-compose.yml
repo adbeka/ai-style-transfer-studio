@@ -8,6 +8,8 @@ services:
     volumes:
       - ./backend:/app
       - ./models:/models
+    environment:
+      - PYTHONPATH=/app
 
   frontend:
     build:
@@ -18,3 +20,5 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    depends_on:
+      - backend

@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import torch
 from model import StyleTransferModel
 from utils import load_image, tensor_to_image
@@ -11,6 +12,16 @@ from auth import auth_router
 
 
 app = FastAPI(title="AI Style Transfer Studio", description="Real-time neural style transfer API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://frontend:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_router)
 
 
@@ -55,6 +66,11 @@ async def style_transfer(
 async def get_styles():
     # Return available style models
     return {"styles": ["adain", "cartoon"]}
+
+@app.post("/api/v1/text-to-image")
+async def text_to_image(request: dict):
+    # Placeholder for text-to-image functionality
+    return {"message": "Text-to-image feature coming soon", "prompt": request.get("prompt")}
 
 if __name__ == "__main__":
     import uvicorn

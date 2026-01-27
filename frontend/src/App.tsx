@@ -1,4 +1,19 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import LoginForm from './LoginForm'
+import './App.css'
+
+function App() {
+  const [contentImage, setContentImage] = useState<File | null>(null)
+  const [styleImage, setStyleImage] = useState<File | null>(null)
+  const [resultImage, setResultImage] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [prompt, setPrompt] = useState("");
+  const [promptResult, setPromptResult] = useState<string | null>(null);
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+
   // Parallax effect for floating shapes
   useEffect(() => {
     const handleParallax = (e: MouseEvent) => {
@@ -13,18 +28,16 @@ import { useState, useEffect } from 'react'
     window.addEventListener('mousemove', handleParallax);
     return () => window.removeEventListener('mousemove', handleParallax);
   }, []);
-import { motion } from 'framer-motion'
-import './App.css'
 
-function App() {
-  const [contentImage, setContentImage] = useState<File | null>(null)
-  const [styleImage, setStyleImage] = useState<File | null>(null)
-  const [resultImage, setResultImage] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [prompt, setPrompt] = useState("");
-  const [promptResult, setPromptResult] = useState<string | null>(null);
-  const [promptLoading, setPromptLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const handleLogin = (jwt: string) => {
+    setToken(jwt);
+    localStorage.setItem('token', jwt);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
 
   const handlePromptGenerate = async () => {
     if (!prompt.trim()) return;
@@ -63,27 +76,60 @@ function App() {
       return () => window.removeEventListener('mousemove', handleParallax);
     }, []);
 
+
+  // Debounced real-time style transfer preview
+  useEffect(() => {
+    if (!contentImage || !styleImage) return;
+    setLoading(true);
+    const timeout = setTimeout(async () => {
+      const formData = new FormData();
+      formData.append('content', contentImage);
+      formData.append('style', styleImage);
+      try {
+        const response = await fetch('/api/v1/style-transfer', {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setResultImage(url);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, 800); // 800ms debounce
+    return () => clearTimeout(timeout);
+  }, [contentImage, styleImage]);
+
+  // Manual trigger (optional, keep for button)
   const handleStyleTransfer = async () => {
-    if (!contentImage || !styleImage) return
-    setLoading(true)
-    const formData = new FormData()
-    formData.append('content', contentImage)
-    formData.append('style', styleImage)
+    if (!contentImage || !styleImage) return;
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('content', contentImage);
+    formData.append('style', styleImage);
     try {
       const response = await fetch('/api/v1/style-transfer', {
         method: 'POST',
         body: formData,
-      })
+      });
       if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        setResultImage(url)
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setResultImage(url);
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  };
+
+  if (!token) {
+    return <LoginForm onLogin={handleLogin} />;
   }
 
   return (
@@ -128,7 +174,10 @@ function App() {
           <a href="#" className="hover:text-[#a259cf] transition">Pricing</a>
           <a href="#" className="hover:text-[#a259cf] transition">Contact</a>
         </nav>
-        <button className="border border-white/40 rounded-full px-6 py-2 text-white font-semibold hover:bg-gradient-to-r hover:from-[#a259cf] hover:to-[#00e0d3] hover:text-white transition shadow-lg">Launch App</button>
+        <button
+          onClick={handleLogout}
+          className="border border-white/40 rounded-full px-6 py-2 text-white font-semibold hover:bg-gradient-to-r hover:from-[#a259cf] hover:to-[#00e0d3] hover:text-white transition shadow-lg"
+        >Logout</button>
       </header>
       {/* Hero Section */}
       <section className="flex flex-col items-center justify-center py-20 px-4 w-full max-w-3xl mx-auto">
