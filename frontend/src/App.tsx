@@ -43,7 +43,6 @@ function App() {
     if (!prompt.trim()) return;
     setPromptLoading(true);
     try {
-      // Replace with your backend endpoint for text-to-image
       const response = await fetch("/api/v1/text-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,21 +59,6 @@ function App() {
       setPromptLoading(false);
     }
   };
-  
-    // Parallax effect for floating shapes
-    useEffect(() => {
-      const handleParallax = (e: MouseEvent) => {
-        const x = (e.clientX / window.innerWidth - 0.5) * 2;
-        const y = (e.clientY / window.innerHeight - 0.5) * 2;
-        const shapes = document.querySelectorAll<HTMLElement>('.floating-shape');
-        shapes.forEach((shape, i) => {
-          const factor = (i + 1) * 8;
-          shape.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
-        });
-      };
-      window.addEventListener('mousemove', handleParallax);
-      return () => window.removeEventListener('mousemove', handleParallax);
-    }, []);
 
 
   // Debounced real-time style transfer preview
